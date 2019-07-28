@@ -52,6 +52,15 @@ class Ship(games.Sprite):
         if self.missile_wait > 0:
             self.missile_wait -= 1
 
+        if self.overlapping_sprites:
+            for sprite in self.overlapping_sprites:
+                sprite.die()
+            self.die()
+
+    def die(self):
+        """ Разрушает корабль. """
+        self.destroy()
+
 
 class Missile(games.Sprite):
     """ Ракета, которую может выпустить корабль игрока """
@@ -98,6 +107,15 @@ class Missile(games.Sprite):
             self.right = 0
         if self.right < 0:
             self.left = games.screen.width
+        # проверка на перекрытие с другими объектами
+        if self.overlapping_sprites:
+            for sprite in self.overlapping_sprites:
+                sprite.die()
+            self.die()
+
+    def die(self):
+        """ Разрушает ракету. """
+        self.destroy()
 
 
 class Asteroid(games.Sprite):
@@ -110,6 +128,7 @@ class Asteroid(games.Sprite):
               MEDIUM: games.load_image("asteroid_med.bmp"),
               LARGE: games.load_image("asteroid_big.bmp")}
     SPEED = 2
+    SPAWN = 2
 
     def __init__(self, x, y, size):
         """ Инициализирует спрайт с изображением астероида """
@@ -132,6 +151,15 @@ class Asteroid(games.Sprite):
             self.right = 0
         if self.right < 0:
             self.left = games.screen.width
+
+    def die(self):
+        """ Разрушает астероид. """
+        # если размеры астероида крупные или средние, разделить его на два более мелких
+        if self.size != Asteroid.SMALL:
+            for i in range(Asteroid.SPAWN):
+                new_asteroid = Asteroid(x=self.x, y=self.y, size=self.size-1)
+                games.screen.add(new_asteroid)
+        self.destroy()
 
 
 def main():
