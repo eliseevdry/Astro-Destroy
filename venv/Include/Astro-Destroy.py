@@ -1,6 +1,7 @@
 
 from livewires import games
-import math, random
+import math
+import random
 
 games.init(screen_width=640, screen_height=480, fps=50)
 
@@ -75,7 +76,10 @@ class Missile(games.Sprite):
         dy = Missile.VELIOCITY_FACTOR * -math.cos(angle)
         # вызываю конструктор Sprite
         super(Missile, self).__init__(image=Missile.image,
-                                     x=x, y=y, dx=dx, dy=dy)
+                                      x=x,
+                                      y=y,
+                                      dx=dx,
+                                      dy=dy)
         self.lifetime = Missile.LIFETIME
 
     def update(self):
@@ -96,9 +100,9 @@ class Missile(games.Sprite):
             self.left = games.screen.width
 
 
-
 class Asteroid(games.Sprite):
     """ Астероид, прямолинейно движущийся по экрану """
+
     SMALL = 1
     MEDIUM = 2
     LARGE = 3
@@ -146,10 +150,8 @@ def main():
                     y=games.screen.height/2)
     games.screen.add(the_ship)
 
-
     games.screen.mainloop()
 
 
 if __name__ == '__main__':
     main()
-
