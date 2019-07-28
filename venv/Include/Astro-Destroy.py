@@ -10,7 +10,13 @@ class Ship(games.Sprite):
     image = games.load_image("ship.bmp")
     ROTATION_STEP = 3
     VALIOCITY_STEP = .03
+    MISSILE_DELAY = 25
     sound = games.load_sound("thrust.wav")
+
+    def __init__(self, x, y):
+        """ Инициализирует спрайт с изображением космического корабля. """
+        super(Ship, self).__init__(image=Ship.image, x=x, y=y)
+        self.missile_wait = 0
 
     def update(self):
         """ Вращает корабль при нажатии клавиш со стрелками. """
@@ -36,9 +42,14 @@ class Ship(games.Sprite):
             self.left = games.screen.width
 
         # если нажат пробел выпустить ракету
-        if games.keyboard.is_pressed(games.K_SPACE):
+        if games.keyboard.is_pressed(games.K_SPACE) and self.missile_wait == 0:
             new_missile = Missile(self.x, self.y, self.angle)
             games.screen.add(new_missile)
+            self.missile_wait = Ship.MISSILE_DELAY
+
+        # если запуск ракеты пока еще не разрешен, вычесть 1 из длины оставшегося интервала ожидания
+        if self.missile_wait > 0:
+            self.missile_wait -= 1
 
 
 class Missile(games.Sprite):
@@ -131,8 +142,7 @@ def main():
         new_asteroid = Asteroid(x=x, y=y, size=size)
         games.screen.add(new_asteroid)
     # создаем корабль
-    the_ship = Ship(image=Ship.image,
-                    x=games.screen.width/2,
+    the_ship = Ship(x=games.screen.width/2,
                     y=games.screen.height/2)
     games.screen.add(the_ship)
 
