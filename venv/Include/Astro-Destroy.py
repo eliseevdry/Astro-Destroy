@@ -24,6 +24,7 @@ class Ship(games.Sprite):
             angle = self.angle * math.pi / 180  # преобразование в радианы
             self.dx += Ship.VALIOCITY_STEP * math.sin(angle)
             self.dy += Ship.VALIOCITY_STEP * -math.cos(angle)
+
         # корабль будет огибать экран
         if self.top > games.screen.height:
             self.bottom = 0
@@ -33,6 +34,56 @@ class Ship(games.Sprite):
             self.right = 0
         if self.right < 0:
             self.left = games.screen.width
+
+        # если нажат пробел выпустить ракету
+        if games.keyboard.is_pressed(games.K_SPACE):
+            new_missile = Missile(self.x, self.y, self.angle)
+            games.screen.add(new_missile)
+
+
+class Missile(games.Sprite):
+    """ Ракета, которую может выпустить корабль игрока """
+    image = games.load_image("missile.bmp")
+    sound = games.load_sound("missile.wav")
+    BUFFER = 40
+    VELIOCITY_FACTOR = 7
+    LIFETIME = 40
+
+    def __init__(self, ship_x, ship_y, ship_angle):
+        """ Инициализирует спрайт с изображением ракеты """
+        Missile.sound.play()
+        # преобразование в радианы
+        angle = ship_angle * math.pi / 180
+        # вычисление начальной позиции ракеты
+        buffer_x = Missile.BUFFER * math.sin(angle)
+        buffer_y = Missile.BUFFER * -math.cos(angle)
+        x = ship_x + buffer_x
+        y = ship_y + buffer_y
+        # вычисление горизонтальной и вертикальной скорости ракеты
+        dx = Missile.VELIOCITY_FACTOR * math.sin(angle)
+        dy = Missile.VELIOCITY_FACTOR * -math.cos(angle)
+        # вызываю конструктор Sprite
+        super(Missile, self).__init__(image=Missile.image,
+                                     x=x, y=y, dx=dx, dy=dy)
+        self.lifetime = Missile.LIFETIME
+
+    def update(self):
+        """ Перемещаем ракету. """
+        # если "срок годности" ракеты истек, она уничтожается
+        self.lifetime -= 1
+        if self.lifetime == 0:
+            self.destroy()
+
+        # ракета будет огибать экран
+        if self.top > games.screen.height:
+            self.bottom = 0
+        if self.bottom < 0:
+            self.top = games.screen.height
+        if self.left > games.screen.width:
+            self.right = 0
+        if self.right < 0:
+            self.left = games.screen.width
+
 
 
 class Asteroid(games.Sprite):
