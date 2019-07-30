@@ -6,7 +6,42 @@ import random
 games.init(screen_width=640, screen_height=480, fps=50)
 
 
-class Ship(games.Sprite):
+class Wrapper(games.Sprite):
+    """ Огибатель. Спрайт, который, двигаясь, огибает графический экран. """
+    def update(self):
+        """ Переносит спрайт на противоположную сторону окна. """
+        if self.top > games.screen.height:
+            self.bottom = 0
+        if self.bottom < 0:
+            self.top = games.screen.height
+        if self.left > games.screen.width:
+            self.right = 0
+        if self.right < 0:
+            self.left = games.screen.width
+
+    def die(self):
+        """ Разрушает объект. """
+        self.destroy()
+
+
+class Collider(Wrapper):
+    """ Погибатель. Спрайт, который, двигаясь, огибает графический экран и при столкновении гибнет. """
+    def update(self):
+        """ Проверяет, нет ли спрайтов, визуально перекрывающихся с данным. """
+        super(Collider, self).update()
+        if self.overlapping_sprites:
+            for sprite in self.overlapping_sprites:
+                sprite.die()
+            self.die()
+
+    def die(self):
+        """ Разрушает объект со взрывом. """
+        new_explosion = Explosion(x=self.x, y=self.y)
+        games.screen.add(new_explosion)
+        self.destroy()
+
+
+class Ship(Collider):
     """ Корабль игрока. """
     image = games.load_image("ship.bmp")
     ROTATION_STEP = 3
@@ -21,6 +56,7 @@ class Ship(games.Sprite):
 
     def update(self):
         """ Вращает корабль при нажатии клавиш со стрелками. """
+        super(Ship, self).update()
         if games.keyboard.is_pressed(games.K_LEFT):
             self.angle -= Ship.ROTATION_STEP
         if games.keyboard.is_pressed(games.K_RIGHT):
@@ -32,16 +68,6 @@ class Ship(games.Sprite):
             self.dx += Ship.VALIOCITY_STEP * math.sin(angle)
             self.dy += Ship.VALIOCITY_STEP * -math.cos(angle)
 
-        # корабль будет огибать экран
-        if self.top > games.screen.height:
-            self.bottom = 0
-        if self.bottom < 0:
-            self.top = games.screen.height
-        if self.left > games.screen.width:
-            self.right = 0
-        if self.right < 0:
-            self.left = games.screen.width
-
         # если нажат пробел выпустить ракету
         if games.keyboard.is_pressed(games.K_SPACE) and self.missile_wait == 0:
             new_missile = Missile(self.x, self.y, self.angle)
@@ -52,17 +78,8 @@ class Ship(games.Sprite):
         if self.missile_wait > 0:
             self.missile_wait -= 1
 
-        if self.overlapping_sprites:
-            for sprite in self.overlapping_sprites:
-                sprite.die()
-            self.die()
 
-    def die(self):
-        """ Разрушает корабль. """
-        self.destroy()
-
-
-class Missile(games.Sprite):
+class Missile(Collider):
     """ Ракета, которую может выпустить корабль игрока """
     image = games.load_image("missile.bmp")
     sound = games.load_sound("missile.wav")
@@ -93,32 +110,36 @@ class Missile(games.Sprite):
 
     def update(self):
         """ Перемещаем ракету. """
+        super(Missile, self).update()
         # если "срок годности" ракеты истек, она уничтожается
         self.lifetime -= 1
         if self.lifetime == 0:
             self.destroy()
 
-        # ракета будет огибать экран
-        if self.top > games.screen.height:
-            self.bottom = 0
-        if self.bottom < 0:
-            self.top = games.screen.height
-        if self.left > games.screen.width:
-            self.right = 0
-        if self.right < 0:
-            self.left = games.screen.width
-        # проверка на перекрытие с другими объектами
-        if self.overlapping_sprites:
-            for sprite in self.overlapping_sprites:
-                sprite.die()
-            self.die()
 
-    def die(self):
-        """ Разрушает ракету. """
-        self.destroy()
+class Explosion(games.Animation):
+    """ Анимированный взрыв. """
+    sound = games.load_sound("explosion.wav")
+    images = ["explosion1.bmp",
+              "explosion2.bmp",
+              "explosion3.bmp",
+              "explosion4.bmp",
+              "explosion5.bmp",
+              "explosion6.bmp",
+              "explosion7.bmp",
+              "explosion8.bmp",
+              "explosion9.bmp"]
+
+    def __init__(self, x, y):
+        super(Explosion, self).__init__(images=Explosion.images,
+                                        x=x, y=y,
+                                        repeat_interval=4, n_repeats=1,
+                                        is_collideable=False)
+        Explosion.sound.play()
 
 
-class Asteroid(games.Sprite):
+
+class Asteroid(Wrapper):
     """ Астероид, прямолинейно движущийся по экрану """
 
     SMALL = 1
@@ -141,17 +162,6 @@ class Asteroid(games.Sprite):
         )
         self.size = size
 
-    def update(self):
-        """ Заставляет астероид обогнуть экран """
-        if self.top > games.screen.height:
-            self.bottom = 0
-        if self.bottom < 0:
-            self.top = games.screen.height
-        if self.left > games.screen.width:
-            self.right = 0
-        if self.right < 0:
-            self.left = games.screen.width
-
     def die(self):
         """ Разрушает астероид. """
         # если размеры астероида крупные или средние, разделить его на два более мелких
@@ -159,7 +169,7 @@ class Asteroid(games.Sprite):
             for i in range(Asteroid.SPAWN):
                 new_asteroid = Asteroid(x=self.x, y=self.y, size=self.size-1)
                 games.screen.add(new_asteroid)
-        self.destroy()
+        super(Asteroid, self).die()
 
 
 def main():
